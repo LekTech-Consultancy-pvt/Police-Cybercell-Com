@@ -108,13 +108,13 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'forwarded': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // const getStatusColor = (status: string) => {
+  //   switch (status) {
+  //     case 'forwarded': return 'bg-blue-100 text-blue-800';
+  //     case 'completed': return 'bg-green-100 text-green-800';
+  //     default: return 'bg-gray-100 text-gray-800';
+  //   }
+  // };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
