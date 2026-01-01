@@ -1,73 +1,99 @@
-# React + TypeScript + Vite
+# Police Cybercell Portal
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A comprehensive portal designed to streamline communication and request management between Police Departments, Cyber Cells, and Internet Service Providers (ISPs).
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The Police Cybercell Portal facilitates the secure and efficient tracking of cybercrime-related requests. It provides a role-based system where:
+- **Police Officers** can initiate requests for subscriber details or call records.
+- **Cyber Cell** acts as an intermediary to review, approve, and forward requests to ISPs.
+- **ISPs** receive requests and provide the necessary data securely.
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Role-Based Access Control**: Secure login for Police, Cyber Cell, and ISP users.
+- **Request Management**:
+  - Create, view, and track status of requests.
+  - Workflow: Police -> Cyber Cell -> ISP -> Cyber Cell -> Police.
+- **Dashboards**: Dedicated dashboards for each role with relevant metrics and actions.
+- **Real-time Updates**: (Planned/Implied) Status updates as requests move through the workflow.
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Frontend**: React (v19), TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS (v4)
+- **Icons**: Lucide React
+- **Backend/Database**: Supabase (Auth & Database)
+- **UI Components**: Radix UI primitives
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Getting Started
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Prerequisites
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js (v18 or higher recommended)
+- npm (comes with Node.js)
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd police-cybercell-com
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Environment Setup:**
+    Create a `.env` file in the root directory and add your Supabase credentials:
+    ```env
+    VITE_SUPABASE_URL=your_supabase_url
+    VITE_SUPABASE_KEY=your_supabase_anon_key
+    ```
+
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+    The application will be available at `http://localhost:5173`.
+
+## Usage
+
+### Login
+Use the login screen to access the portal. You will need credentials corresponding to one of the three roles:
+- **Police**: To initiate requests.
+- **Cyber**: To manage and forward requests.
+- **ISP**: To fulfill requests.
+
+### Police Dashboard
+- **New Request**: Submit a new query for a phone number.
+- **My Requests**: View the status of submitted requests.
+
+### Cyber Dashboard
+- **Pending Requests**: Review requests from Police stations.
+- **Forward to ISP**: Approve requests and send them to the relevant ISP.
+
+### ISP Dashboard
+- **Incoming Requests**: View requests forwarded by the Cyber Cell.
+- **Update Status**: Provide the requested information and mark requests as completed.
+
+## Project Structure
+
+```
+src/
+├── components/        # React components for Dashboards and Forms
+│   ├── LoginForm.tsx
+│   ├── PoliceDashboard.tsx
+│   ├── CyberDashboard.tsx
+│   └── ISPDashboard.tsx
+├── App.tsx            # Main application component & Routing logic
+├── main.tsx           # Entry point
+└── supabaseClient.ts  # Supabase client configuration
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## License
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+[License Name]

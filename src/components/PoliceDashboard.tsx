@@ -6,7 +6,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
-import { Shield, Phone, Send, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Shield, Phone, Send, Clock, CheckCircle, AlertCircle, RefreshCw, Search } from 'lucide-react';
 
 interface Request {
   id: string;
@@ -29,6 +29,7 @@ interface PoliceDashboardProps {
 
 export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps) {
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -65,7 +66,7 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     if (!phoneNumber.trim()) {
       setError('Please enter a phone number');
       return;
@@ -145,6 +146,10 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
     }
   };
 
+  const filteredRequests = requests.filter(r =>
+    r.phoneNumber.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const forwardedRequests = requests.filter(r => r.status === 'forwarded');
   const completedRequests = requests.filter(r => r.status === 'completed');
@@ -164,8 +169,8 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={fetchRequests}
               disabled={fetchLoading}
               size="sm"
@@ -212,9 +217,9 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
                     disabled={loading}
                   />
                 </div>
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+                <Button
+                  type="submit"
+                  className="w-full"
                   disabled={loading || !phoneNumber.trim()}
                 >
                   {loading ? (
@@ -249,16 +254,27 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
 
           {/* Active Requests */}
           <Card className="lg:col-span-2">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Investigation Requests</CardTitle>
-                <CardDescription>
-                  Track your submitted phone investigation requests
-                </CardDescription>
+            <CardHeader>
+              <div className="flex flex-row items-center justify-between mb-4">
+                <div>
+                  <CardTitle>Investigation Requests</CardTitle>
+                  <CardDescription>
+                    Track your submitted phone investigation requests
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="ml-2">
+                  Total: {requests.length}
+                </Badge>
               </div>
-              <Badge variant="outline" className="ml-2">
-                Total: {requests.length}
-              </Badge>
+              <div className="relative p-2">
+                {/* <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground p-2" /> */}
+                <Input
+                  placeholder="Search phone numbers..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 border border-gray-300 rounded-md"
+                />
+              </div>
             </CardHeader>
             <CardContent>
               {fetchLoading ? (
@@ -274,7 +290,7 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
                 </div>
               ) : (
                 <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                  {requests.map((request) => (
+                  {filteredRequests.map((request) => (
                     <div key={request.id} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -286,7 +302,7 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
                           <span className="ml-1 capitalize">{request.status}</span>
                         </Badge>
                       </div>
-                      
+
                       {/* <div className="text-sm text-muted-foreground">
                         <div>Submitted: {new Date(request.timestamp).toLocaleString()}</div>
                         <div>Request ID: {request.id.slice(0, 8)}...</div>
@@ -332,6 +348,11 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
                       )}
                     </div>
                   ))}
+                  {filteredRequests.length === 0 && searchQuery && (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No requests found trying to match "{searchQuery}"
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
