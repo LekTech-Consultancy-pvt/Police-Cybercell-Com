@@ -6,10 +6,11 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
-import { Shield, Phone, Send, Clock, CheckCircle, AlertCircle, RefreshCw, LayoutDashboard, Globe } from 'lucide-react';
+import { Shield, Phone, Send, Clock, CheckCircle, AlertCircle, RefreshCw, LayoutDashboard, Globe, FileText } from 'lucide-react';
 import { PhoneValidation } from './PhoneValidation';
 
 import { encryptData, decryptData } from '../utils/encryption';
+import { generateRequestReport } from '../utils/reportGenerator';
 
 interface Request {
   id: string;
@@ -390,7 +391,7 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
                         {request.result && (
                           <>
                             <Separator />
-                            <div className="space-y-2">
+                            <div className="space-y-4">
                               <div className="flex items-center gap-2 text-green-600">
                                 <CheckCircle className="w-4 h-4" />
                                 <span className="text-sm font-medium">Investigation Complete</span>
@@ -404,6 +405,16 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
                                   <span className="text-xs">Data encrypted and securely transmitted</span>
                                 </div>
                               </div>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full border-green-200 hover:bg-green-50 text-green-700"
+                                onClick={() => generateRequestReport(request)}
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Download Official Report
+                              </Button>
                             </div>
                           </>
                         )}
