@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { encryptData, decryptData } from '../utils/encryption';
 import { supabase } from '../supabaseClient';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -37,6 +38,8 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+
+
   useEffect(() => {
     fetchRequests();
   }, []);
@@ -49,7 +52,28 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
       console.error('Error fetching requests:', error);
       return;
     }
-    setRequests(data || []);
+
+    const decryptedRequests = (data || []).map((req: any) => {
+      let decryptedResult = req.result;
+      // Decrypt result if it exists and is encrypted (though usually ISP is filling it, they might see previously completed ones)
+      if (req.result && req.result.encrypted) {
+        decryptedResult = {
+          ...req.result,
+          subscriberName: decryptData(req.result.subscriberName),
+          address: decryptData(req.result.address),
+          provider: decryptData(req.result.provider)
+        };
+      }
+
+      return {
+        ...req,
+        stationCode: decryptData(req.stationCode).replace(/^"|"$/g, ''),
+        phoneNumber: decryptData(req.phoneNumber).replace(/^"|"$/g, ''),
+        result: decryptedResult
+      };
+    });
+
+    setRequests(decryptedRequests);
   };
 
   const forwardedRequests = requests.filter(r => r.status === 'forwarded');
@@ -66,7 +90,7 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
 
   const handleSubmitDetails = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedRequest || !subscriberName.trim() || !address.trim()) {
       alert('Please fill in all required fields');
       return;
@@ -74,16 +98,18 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
 
     setLoading(true);
     try {
+      const encryptedResult = {
+        subscriberName: encryptData(subscriberName.trim()),
+        address: encryptData(address.trim()),
+        provider: encryptData(provider.trim()),
+        encrypted: true,
+      };
+
       const { error } = await supabase
         .from('requests')
         .update({
           status: 'completed',
-          result: {
-            subscriberName: subscriberName.trim(),
-            address: address.trim(),
-            provider: provider.trim(),
-            encrypted: true,
-          },
+          result: encryptedResult,
         })
         .eq('id', selectedRequest.id);
 
@@ -96,10 +122,10 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
       setAddress('');
       setDialogOpen(false);
       setSelectedRequest(null);
-      
+
       // Refresh requests
       await fetchRequests();
-      
+
     } catch (error) {
       console.error('Error updating request:', error);
       alert('Error submitting details. Please try again.');
@@ -192,7 +218,7 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
                           Pending
                         </Badge>
                       </div>
-                      
+
                       <div className="text-sm text-muted-foreground space-y-1">
                         <div>Station: {request.stationCode}</div>
                         <div>Received: {request.timestamp}</div>
@@ -211,7 +237,7 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
 
                       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                         <DialogTrigger asChild>
-                          <Button 
+                          <Button
                             onClick={() => handleOpenDialog(request)}
                             className="w-full"
                             size="sm"
@@ -269,9 +295,9 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
                               <Shield className="w-4 h-4" />
                               <span>Data will be encrypted using AES-256 before transmission</span>
                             </div>
-                            <Button 
-                              type="submit" 
-                              className="w-full" 
+                            <Button
+                              type="submit"
+                              className="w-full"
                               disabled={loading || !subscriberName.trim() || !address.trim() || !provider.trim()}
                             >
                               <Send className="w-4 h-4 mr-2" />
@@ -314,7 +340,7 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
                           Completed
                         </Badge>
                       </div>
-                      
+
                       <div className="text-sm text-muted-foreground space-y-1">
                         <div>Station: {request.stationCode}</div>
                         <div>{request.timestamp}</div>

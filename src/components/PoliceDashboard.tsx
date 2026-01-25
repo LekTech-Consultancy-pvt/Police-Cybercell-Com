@@ -9,6 +9,8 @@ import { Separator } from './ui/separator';
 import { Shield, Phone, Send, Clock, CheckCircle, AlertCircle, RefreshCw, LayoutDashboard, Globe } from 'lucide-react';
 import { PhoneValidation } from './PhoneValidation';
 
+import { encryptData, decryptData } from '../utils/encryption';
+
 interface Request {
   id: string;
   phoneNumber: string;
@@ -48,17 +50,41 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
     setFetchLoading(true);
     setError(null);
     try {
+      // Fetch all requests and filter client-side since we need to decrypt to check stationCode
+      // In a real app with RLS, the server would handle this auth/filtering
       const { data, error: fetchError } = await supabase
         .from('requests')
         .select('*')
-        .eq('stationCode', stationCode)
         .order('timestamp', { ascending: false });
 
       if (fetchError) {
         throw fetchError;
       }
 
-      setRequests(data || []);
+      const decryptedRequests = (data || []).map((req: any) => {
+        // Decrypt station code and phone number
+        const decryptedStationCode = decryptData(req.stationCode);
+        const decryptedPhone = decryptData(req.phoneNumber);
+
+        let decryptedResult = req.result;
+        if (req.result && req.result.encrypted) {
+          decryptedResult = {
+            ...req.result,
+            subscriberName: decryptData(req.result.subscriberName),
+            address: decryptData(req.result.address),
+            provider: decryptData(req.result.provider)
+          };
+        }
+
+        return {
+          ...req,
+          stationCode: decryptedStationCode.replace(/^"|"$/g, ''), // Clean potential extra quotes from legacy data
+          phoneNumber: decryptedPhone.replace(/^"|"$/g, ''),
+          result: decryptedResult
+        };
+      }).filter(req => req.stationCode === stationCode);
+
+      setRequests(decryptedRequests);
     } catch (err) {
       console.error('Error fetching requests:', err);
       setError('Failed to load requests. Please try refreshing.');
@@ -79,14 +105,17 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
     setLoading(true);
     try {
       const timestamp = new Date().toISOString();
+      const encryptedPhone = encryptData(phoneNumber.trim());
+      const encryptedStation = encryptData(stationCode);
+
       const { data, error: insertError } = await supabase
         .from('requests')
         .insert([
           {
-            phoneNumber: phoneNumber.trim(),
+            phoneNumber: encryptedPhone,
             timestamp,
             status: 'pending',
-            stationCode,
+            stationCode: encryptedStation,
           },
         ])
         .select();
@@ -96,7 +125,16 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
       }
 
       if (data && data.length > 0) {
-        setRequests((prev) => [data[0], ...prev]); // Add new request to top
+        // Manually constructing the new request object to avoid refetching immediately
+        // and ensuring the UI shows the unencrypted data
+        const newRequest: Request = {
+          id: data[0].id,
+          phoneNumber: phoneNumber.trim(),
+          timestamp,
+          status: 'pending',
+          stationCode,
+        };
+        setRequests((prev) => [newRequest, ...prev]);
         setPhoneNumber('');
         setError(null);
       }
@@ -118,7 +156,6 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
           event: '*',
           schema: 'public',
           table: 'requests',
-          filter: `stationCode=eq.${stationCode}`
         },
         (payload) => {
           console.log('Real-time update received:', payload);

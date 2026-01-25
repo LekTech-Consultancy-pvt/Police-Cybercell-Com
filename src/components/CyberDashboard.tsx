@@ -1,4 +1,5 @@
 import { Button } from './ui/button';
+import { decryptData } from '../utils/encryption';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
@@ -20,7 +21,7 @@ interface Request {
   };
 }
 
- 
+
 
 
 interface CyberDashboardProps {
@@ -32,17 +33,41 @@ export function CyberDashboard({ onLogout }: CyberDashboardProps) {
   const [loading, setLoading] = useState(false);
   // Removed unused error state
 
+
+
   // Fetch requests from Supabase
   useEffect(() => {
     const fetchRequests = async () => {
       setLoading(true);
       const { data, error } = await supabase.from('requests').select('*');
-      setLoading(false);
+
       if (error) {
+        setLoading(false);
         // Optionally handle error (e.g., show toast)
         return;
       }
-      setRequests(data || []);
+
+      const decryptedRequests = (data || []).map((req: any) => {
+        let decryptedResult = req.result;
+        if (req.result && req.result.encrypted) {
+          decryptedResult = {
+            ...req.result,
+            subscriberName: decryptData(req.result.subscriberName),
+            address: decryptData(req.result.address),
+            provider: decryptData(req.result.provider)
+          };
+        }
+
+        return {
+          ...req,
+          stationCode: decryptData(req.stationCode).replace(/^"|"$/g, ''),
+          phoneNumber: decryptData(req.phoneNumber).replace(/^"|"$/g, ''),
+          result: decryptedResult
+        };
+      });
+
+      setRequests(decryptedRequests);
+      setLoading(false);
     };
     fetchRequests();
   }, []);
@@ -164,13 +189,13 @@ export function CyberDashboard({ onLogout }: CyberDashboardProps) {
                           Pending
                         </Badge>
                       </div>
-                      
+
                       <div className="text-sm text-muted-foreground space-y-1">
                         <div>From: Station {request.stationCode}</div>
                         <div>Submitted: {request.timestamp}</div>
                       </div>
 
-                      <Button 
+                      <Button
                         onClick={() => handleForwardRequest(request.id)}
                         className="w-full"
                         size="sm"
@@ -214,7 +239,7 @@ export function CyberDashboard({ onLogout }: CyberDashboardProps) {
                           <span className="capitalize">{request.status}</span>
                         </Badge>
                       </div>
-                      
+
                       <div className="text-sm text-muted-foreground space-y-1">
                         <div>Station: {request.stationCode}</div>
                         <div>{request.timestamp}</div>
