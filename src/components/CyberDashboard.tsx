@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
-import { Building, Phone, ArrowRight, Send, Shield, Clock, CheckCircle } from 'lucide-react';
+import { Building, Phone, ArrowRight, Send, Shield, Clock, CheckCircle, RefreshCw } from 'lucide-react';
 
 interface Request {
   id: string;
@@ -21,9 +21,6 @@ interface Request {
   };
 }
 
-
-
-
 interface CyberDashboardProps {
   onLogout: () => void;
 }
@@ -31,44 +28,43 @@ interface CyberDashboardProps {
 export function CyberDashboard({ onLogout }: CyberDashboardProps) {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(false);
-  // Removed unused error state
-
-
+  const [refreshing, setRefreshing] = useState(false);
 
   // Fetch requests from Supabase
-  useEffect(() => {
-    const fetchRequests = async () => {
-      setLoading(true);
-      const { data, error } = await supabase.from('requests').select('*');
+  const fetchRequests = async () => {
+    setRefreshing(true);
+    const { data, error } = await supabase.from('requests').select('*');
 
-      if (error) {
-        setLoading(false);
-        // Optionally handle error (e.g., show toast)
-        return;
+    if (error) {
+      setRefreshing(false);
+      // Optionally handle error (e.g., show toast)
+      return;
+    }
+
+    const decryptedRequests = (data || []).map((req: any) => {
+      let decryptedResult = req.result;
+      if (req.result && req.result.encrypted) {
+        decryptedResult = {
+          ...req.result,
+          subscriberName: decryptData(req.result.subscriberName),
+          address: decryptData(req.result.address),
+          provider: decryptData(req.result.provider)
+        };
       }
 
-      const decryptedRequests = (data || []).map((req: any) => {
-        let decryptedResult = req.result;
-        if (req.result && req.result.encrypted) {
-          decryptedResult = {
-            ...req.result,
-            subscriberName: decryptData(req.result.subscriberName),
-            address: decryptData(req.result.address),
-            provider: decryptData(req.result.provider)
-          };
-        }
+      return {
+        ...req,
+        stationCode: decryptData(req.stationCode).replace(/^"|"$/g, ''),
+        phoneNumber: decryptData(req.phoneNumber).replace(/^"|"$/g, ''),
+        result: decryptedResult
+      };
+    });
 
-        return {
-          ...req,
-          stationCode: decryptData(req.stationCode).replace(/^"|"$/g, ''),
-          phoneNumber: decryptData(req.phoneNumber).replace(/^"|"$/g, ''),
-          result: decryptedResult
-        };
-      });
+    setRequests(decryptedRequests);
+    setRefreshing(false);
+  };
 
-      setRequests(decryptedRequests);
-      setLoading(false);
-    };
+  useEffect(() => {
     fetchRequests();
   }, []);
 
@@ -85,8 +81,7 @@ export function CyberDashboard({ onLogout }: CyberDashboardProps) {
       return;
     }
     // Refresh requests
-    const { data } = await supabase.from('requests').select('*');
-    setRequests(data || []);
+    fetchRequests();
   };
 
   const pendingRequests = requests.filter(r => r.status === 'pending');
@@ -116,9 +111,15 @@ export function CyberDashboard({ onLogout }: CyberDashboardProps) {
               <p className="text-muted-foreground">Investigation Request Management</p>
             </div>
           </div>
-          <Button variant="outline" onClick={onLogout}>
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={fetchRequests} disabled={refreshing}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button variant="outline" onClick={onLogout}>
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
