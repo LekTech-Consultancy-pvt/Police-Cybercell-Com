@@ -6,7 +6,8 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
-import { Shield, Phone, Send, Clock, CheckCircle, AlertCircle, RefreshCw, Search } from 'lucide-react';
+import { Shield, Phone, Send, Clock, CheckCircle, AlertCircle, RefreshCw, LayoutDashboard, Globe } from 'lucide-react';
+import { PhoneValidation } from './PhoneValidation';
 
 interface Request {
   id: string;
@@ -27,7 +28,10 @@ interface PoliceDashboardProps {
   onLogout: () => void;
 }
 
+type View = 'dashboard' | 'validation';
+
 export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps) {
+  const [currentView, setCurrentView] = useState<View>('dashboard');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [requests, setRequests] = useState<Request[]>([]);
@@ -170,6 +174,23 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
           </div>
           <div className="flex items-center gap-2">
             <Button
+              variant={currentView === 'dashboard' ? 'secondary' : 'ghost'}
+              onClick={() => setCurrentView('dashboard')}
+              size="sm"
+            >
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              Dashboard
+            </Button>
+            <Button
+              variant={currentView === 'validation' ? 'secondary' : 'ghost'}
+              onClick={() => setCurrentView('validation')}
+              size="sm"
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              Phone Validation
+            </Button>
+            <Separator orientation="vertical" className="h-6 mx-2" />
+            <Button
               variant="outline"
               onClick={fetchRequests}
               disabled={fetchLoading}
@@ -191,173 +212,177 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Submit Request Form */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="w-5 h-5" />
-                Submit Phone Investigation
-              </CardTitle>
-              <CardDescription>
-                Submit a phone number for investigation through cyber cell
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+        {currentView === 'validation' ? (
+          <PhoneValidation />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Submit Request Form */}
+            <Card className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Phone className="w-5 h-5" />
+                  Submit Phone Investigation
+                </CardTitle>
+                <CardDescription>
+                  Submit a phone number for investigation through cyber cell
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+1234567890"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading || !phoneNumber.trim()}
+                  >
+                    {loading ? (
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4 mr-2" />
+                    )}
+                    {loading ? 'Submitting...' : 'Submit Request'}
+                  </Button>
+                </form>
+
+                {/* Quick Stats */}
+                <div className="mt-6 space-y-3">
+                  <Separator />
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="p-2 bg-yellow-50 rounded">
+                      <div className="text-lg font-bold text-yellow-700">{pendingRequests.length}</div>
+                      <div className="text-xs text-yellow-600">Pending</div>
+                    </div>
+                    <div className="p-2 bg-blue-50 rounded">
+                      <div className="text-lg font-bold text-blue-700">{forwardedRequests.length}</div>
+                      <div className="text-xs text-blue-600">Forwarded</div>
+                    </div>
+                    <div className="p-2 bg-green-50 rounded">
+                      <div className="text-lg font-bold text-green-700">{completedRequests.length}</div>
+                      <div className="text-xs text-green-600">Completed</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Active Requests */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <div className="flex flex-row items-center justify-between mb-4">
+                  <div>
+                    <CardTitle>Investigation Requests</CardTitle>
+                    <CardDescription>
+                      Track your submitted phone investigation requests
+                    </CardDescription>
+                  </div>
+                  <Badge variant="outline" className="ml-2">
+                    Total: {requests.length}
+                  </Badge>
+                </div>
+                <div className="relative p-2">
+                  {/* <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground p-2" /> */}
                   <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+1234567890"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    required
-                    disabled={loading}
+                    placeholder="Search phone numbers..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 border border-gray-300 rounded-md"
                   />
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={loading || !phoneNumber.trim()}
-                >
-                  {loading ? (
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4 mr-2" />
-                  )}
-                  {loading ? 'Submitting...' : 'Submit Request'}
-                </Button>
-              </form>
-
-              {/* Quick Stats */}
-              <div className="mt-6 space-y-3">
-                <Separator />
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="p-2 bg-yellow-50 rounded">
-                    <div className="text-lg font-bold text-yellow-700">{pendingRequests.length}</div>
-                    <div className="text-xs text-yellow-600">Pending</div>
+              </CardHeader>
+              <CardContent>
+                {fetchLoading ? (
+                  <div className="text-center py-8">
+                    <RefreshCw className="w-8 h-8 mx-auto animate-spin text-muted-foreground" />
+                    <p className="text-muted-foreground mt-2">Loading requests...</p>
                   </div>
-                  <div className="p-2 bg-blue-50 rounded">
-                    <div className="text-lg font-bold text-blue-700">{forwardedRequests.length}</div>
-                    <div className="text-xs text-blue-600">Forwarded</div>
+                ) : requests.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Phone className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No requests submitted yet</p>
+                    <p className="text-sm">Submit a phone number to get started</p>
                   </div>
-                  <div className="p-2 bg-green-50 rounded">
-                    <div className="text-lg font-bold text-green-700">{completedRequests.length}</div>
-                    <div className="text-xs text-green-600">Completed</div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Active Requests */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex flex-row items-center justify-between mb-4">
-                <div>
-                  <CardTitle>Investigation Requests</CardTitle>
-                  <CardDescription>
-                    Track your submitted phone investigation requests
-                  </CardDescription>
-                </div>
-                <Badge variant="outline" className="ml-2">
-                  Total: {requests.length}
-                </Badge>
-              </div>
-              <div className="relative p-2">
-                {/* <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground p-2" /> */}
-                <Input
-                  placeholder="Search phone numbers..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 border border-gray-300 rounded-md"
-                />
-              </div>
-            </CardHeader>
-            <CardContent>
-              {fetchLoading ? (
-                <div className="text-center py-8">
-                  <RefreshCw className="w-8 h-8 mx-auto animate-spin text-muted-foreground" />
-                  <p className="text-muted-foreground mt-2">Loading requests...</p>
-                </div>
-              ) : requests.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Phone className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No requests submitted yet</p>
-                  <p className="text-sm">Submit a phone number to get started</p>
-                </div>
-              ) : (
-                <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                  {filteredRequests.map((request) => (
-                    <div key={request.id} className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Phone className="w-4 h-4 text-muted-foreground" />
-                          <span className="font-mono font-medium">{request.phoneNumber}</span>
-                        </div>
-                        <Badge className={getStatusColor(request.status)}>
-                          {getStatusIcon(request.status)}
-                          <span className="ml-1 capitalize">{request.status}</span>
-                        </Badge>
-                      </div>
-
-                      {/* <div className="text-sm text-muted-foreground">
-                        <div>Submitted: {new Date(request.timestamp).toLocaleString()}</div>
-                        <div>Request ID: {request.id.slice(0, 8)}...</div>
-                      </div> */}
-
-                      {request.status === 'pending' && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-700">
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            <span>Request submitted to cyber cell. Awaiting processing.</span>
+                ) : (
+                  <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                    {filteredRequests.map((request) => (
+                      <div key={request.id} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Phone className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-mono font-medium">{request.phoneNumber}</span>
                           </div>
+                          <Badge className={getStatusColor(request.status)}>
+                            {getStatusIcon(request.status)}
+                            <span className="ml-1 capitalize">{request.status}</span>
+                          </Badge>
                         </div>
-                      )}
 
-                      {request.status === 'forwarded' && (
-                        <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-700">
-                          <div className="flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" />
-                            <span>Request forwarded to ISP provider. Awaiting response.</span>
-                          </div>
-                        </div>
-                      )}
+                        {/* <div className="text-sm text-muted-foreground">
+                          <div>Submitted: {new Date(request.timestamp).toLocaleString()}</div>
+                          <div>Request ID: {request.id.slice(0, 8)}...</div>
+                        </div> */}
 
-                      {request.result && (
-                        <>
-                          <Separator />
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-green-600">
-                              <CheckCircle className="w-4 h-4" />
-                              <span className="text-sm font-medium">Investigation Complete</span>
+                        {request.status === 'pending' && (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-700">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              <span>Request submitted to cyber cell. Awaiting processing.</span>
                             </div>
-                            <div className="bg-green-50 border border-green-200 rounded p-3 text-sm space-y-2">
-                              <div><strong>Subscriber:</strong> {request.result.subscriberName}</div>
-                              <div><strong>Address:</strong> {request.result.address}</div>
-                              <div><strong>Provider:</strong> {request.result.provider}</div>
-                              <div className="flex items-center gap-2 text-green-700 pt-2 border-t border-green-200">
-                                <Shield className="w-3 h-3" />
-                                <span className="text-xs">Data encrypted and securely transmitted</span>
+                          </div>
+                        )}
+
+                        {request.status === 'forwarded' && (
+                          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-700">
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4" />
+                              <span>Request forwarded to ISP provider. Awaiting response.</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {request.result && (
+                          <>
+                            <Separator />
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-green-600">
+                                <CheckCircle className="w-4 h-4" />
+                                <span className="text-sm font-medium">Investigation Complete</span>
+                              </div>
+                              <div className="bg-green-50 border border-green-200 rounded p-3 text-sm space-y-2">
+                                <div><strong>Subscriber:</strong> {request.result.subscriberName}</div>
+                                <div><strong>Address:</strong> {request.result.address}</div>
+                                <div><strong>Provider:</strong> {request.result.provider}</div>
+                                <div className="flex items-center gap-2 text-green-700 pt-2 border-t border-green-200">
+                                  <Shield className="w-3 h-3" />
+                                  <span className="text-xs">Data encrypted and securely transmitted</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                  {filteredRequests.length === 0 && searchQuery && (
-                    <div className="text-center py-4 text-muted-foreground">
-                      No requests found trying to match "{searchQuery}"
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                    {filteredRequests.length === 0 && searchQuery && (
+                      <div className="text-center py-4 text-muted-foreground">
+                        No requests found trying to match "{searchQuery}"
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
