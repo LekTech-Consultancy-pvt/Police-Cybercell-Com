@@ -114,7 +114,7 @@ export function PhoneValidation() {
                         Phone Number Validator
                     </CardTitle>
                     <CardDescription>
-                        Validate phone numbers globally using Abstract API to check validity, line type, risk score, and carrier information.
+                        Validate phone numbers globally to check validity, line type, risk score, and carrier information.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
