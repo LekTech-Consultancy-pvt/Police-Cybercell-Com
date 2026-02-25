@@ -22,6 +22,7 @@ interface Request {
     subscriberName: string;
     address: string;
     provider: string;
+    crimeHistory?: string;
     encrypted: boolean;
   };
 }
@@ -73,7 +74,8 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
             ...req.result,
             subscriberName: decryptData(req.result.subscriberName),
             address: decryptData(req.result.address),
-            provider: decryptData(req.result.provider)
+            provider: decryptData(req.result.provider),
+            crimeHistory: req.result.crimeHistory ? decryptData(req.result.crimeHistory) : undefined
           };
         }
 
@@ -400,6 +402,9 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
                                 <div><strong>Subscriber:</strong> {request.result.subscriberName}</div>
                                 <div><strong>Address:</strong> {request.result.address}</div>
                                 <div><strong>Provider:</strong> {request.result.provider}</div>
+                                {request.result.crimeHistory && (
+                                  <div><strong>Crime History:</strong> {request.result.crimeHistory}</div>
+                                )}
                                 <div className="flex items-center gap-2 text-green-700 pt-2 border-t border-green-200">
                                   <Shield className="w-3 h-3" />
                                   <span className="text-xs">Data encrypted and securely transmitted</span>

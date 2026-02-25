@@ -21,6 +21,7 @@ interface Request {
     subscriberName: string;
     address: string;
     provider: string;
+    crimeHistory?: string;
     encrypted: boolean;
   };
 }
@@ -33,6 +34,7 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [subscriberName, setSubscriberName] = useState('');
   const [address, setAddress] = useState('');
+  const [crimeHistory, setCrimeHistory] = useState('');
   const [provider, setProvider] = useState('GlobalNet Communications');
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(false);
@@ -61,7 +63,8 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
           ...req.result,
           subscriberName: decryptData(req.result.subscriberName),
           address: decryptData(req.result.address),
-          provider: decryptData(req.result.provider)
+          provider: decryptData(req.result.provider),
+          crimeHistory: req.result.crimeHistory ? decryptData(req.result.crimeHistory) : undefined
         };
       }
 
@@ -84,6 +87,7 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
     // Reset form fields when opening dialog
     setSubscriberName('');
     setAddress('');
+    setCrimeHistory('');
     setProvider('GlobalNet Communications');
     setDialogOpen(true);
   };
@@ -102,6 +106,7 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
         subscriberName: encryptData(subscriberName.trim()),
         address: encryptData(address.trim()),
         provider: encryptData(provider.trim()),
+        ...(crimeHistory.trim() ? { crimeHistory: encryptData(crimeHistory.trim()) } : {}),
         encrypted: true,
       };
 
@@ -120,6 +125,7 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
       // Reset form and close dialog
       setSubscriberName('');
       setAddress('');
+      setCrimeHistory('');
       setDialogOpen(false);
       setSelectedRequest(null);
 
@@ -280,6 +286,18 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
                               />
                             </div>
                             <div className="space-y-2">
+                              <Label htmlFor="crimeHistory">
+                                Crime Case History (Optional)
+                              </Label>
+                              <Textarea
+                                id="crimeHistory"
+                                value={crimeHistory}
+                                onChange={(e) => setCrimeHistory(e.target.value)}
+                                placeholder="Enter any relevant crime case history"
+                                rows={2}
+                              />
+                            </div>
+                            <div className="space-y-2">
                               <Label htmlFor="provider">
                                 Service Provider <span className="text-red-500">*</span>
                               </Label>
@@ -358,6 +376,9 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
                               <div><strong>Subscriber:</strong> {request.result.subscriberName}</div>
                               <div><strong>Address:</strong> {request.result.address}</div>
                               <div><strong>Provider:</strong> {request.result.provider}</div>
+                              {request.result.crimeHistory && (
+                                <div><strong>Crime History:</strong> {request.result.crimeHistory}</div>
+                              )}
                             </div>
                           </div>
                         </>

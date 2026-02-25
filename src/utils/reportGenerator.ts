@@ -10,6 +10,7 @@ interface Request {
         subscriberName: string;
         address: string;
         provider: string;
+        crimeHistory?: string;
         encrypted: boolean;
     };
 }
@@ -81,6 +82,16 @@ export const generateRequestReport = (request: Request) => {
         doc.text(addressLines, 70, yPos);
 
         yPos += (lineHeight * addressLines.length) + 5;
+
+        if (request.result.crimeHistory) {
+            doc.setFont("helvetica", "bold");
+            doc.text("Crime History:", 20, yPos);
+            doc.setFont("helvetica", "normal");
+
+            const historyLines = doc.splitTextToSize(request.result.crimeHistory, 110);
+            doc.text(historyLines, 70, yPos);
+            yPos += (lineHeight * historyLines.length) + 5;
+        }
     } else {
         doc.setTextColor(200, 0, 0);
         doc.text("Investigation Status: In Progress / Pending Results", 20, yPos);
