@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Server, Phone, Shield, Send, Clock, CheckCircle, Lock } from 'lucide-react';
+import { Server, Phone, Shield, Send, Clock, CheckCircle, Lock, RefreshCw } from 'lucide-react';
 
 interface Request {
   id: string;
@@ -162,9 +162,20 @@ export function ISPDashboard({ onLogout }: ISPDashboardProps) {
               <p className="text-muted-foreground">GlobalNet Communications Portal</p>
             </div>
           </div>
-          <Button variant="outline" onClick={onLogout}>
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={fetchRequests}
+              disabled={loading}
+              size="sm"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button variant="outline" onClick={onLogout} size="sm">
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
