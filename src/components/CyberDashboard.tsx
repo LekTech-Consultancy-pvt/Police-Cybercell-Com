@@ -13,6 +13,7 @@ interface Request {
   timestamp: string;
   status: 'pending' | 'forwarded' | 'completed';
   stationCode: string;
+  crimeHistory?: string;
   result?: {
     subscriberName: string;
     address: string;
@@ -52,10 +53,13 @@ export function CyberDashboard({ onLogout }: CyberDashboardProps) {
         };
       }
 
+      const decryptedCrimeHistory = req.crimeHistory ? decryptData(req.crimeHistory) : undefined;
+
       return {
         ...req,
         stationCode: decryptData(req.stationCode).replace(/^"|"$/g, ''),
         phoneNumber: decryptData(req.phoneNumber).replace(/^"|"$/g, ''),
+        crimeHistory: decryptedCrimeHistory ? decryptedCrimeHistory.replace(/^"|"$/g, '') : undefined,
         result: decryptedResult
       };
     });

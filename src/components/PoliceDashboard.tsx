@@ -3,9 +3,11 @@ import { supabase } from '../supabaseClient';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Shield, Phone, Send, Clock, CheckCircle, AlertCircle, RefreshCw, LayoutDashboard, Globe, FileText } from 'lucide-react';
 import { PhoneValidation } from './PhoneValidation';
 
@@ -18,11 +20,11 @@ interface Request {
   timestamp: string;
   status: 'pending' | 'forwarded' | 'completed';
   stationCode: string;
+  crimeHistory?: string;
   result?: {
     subscriberName: string;
     address: string;
     provider: string;
-    crimeHistory?: string;
     encrypted: boolean;
   };
 }
@@ -42,6 +44,10 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [selectedRequestForHistory, setSelectedRequestForHistory] = useState<Request | null>(null);
+  const [crimeHistoryInput, setCrimeHistoryInput] = useState('');
 
   // Fetch requests from Supabase on component mount
   useEffect(() => {
@@ -67,6 +73,7 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
         // Decrypt station code and phone number
         const decryptedStationCode = decryptData(req.stationCode);
         const decryptedPhone = decryptData(req.phoneNumber);
+        const decryptedCrimeHistory = req.crimeHistory ? decryptData(req.crimeHistory) : undefined;
 
         let decryptedResult = req.result;
         if (req.result && req.result.encrypted) {
@@ -74,8 +81,7 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
             ...req.result,
             subscriberName: decryptData(req.result.subscriberName),
             address: decryptData(req.result.address),
-            provider: decryptData(req.result.provider),
-            crimeHistory: req.result.crimeHistory ? decryptData(req.result.crimeHistory) : undefined
+            provider: decryptData(req.result.provider)
           };
         }
 
@@ -83,6 +89,7 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
           ...req,
           stationCode: decryptedStationCode.replace(/^"|"$/g, ''), // Clean potential extra quotes from legacy data
           phoneNumber: decryptedPhone.replace(/^"|"$/g, ''),
+          crimeHistory: decryptedCrimeHistory ? decryptedCrimeHistory.replace(/^"|"$/g, '') : undefined,
           result: decryptedResult
         };
       }).filter(req => req.stationCode === stationCode);
@@ -144,6 +151,38 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
     } catch (err) {
       console.error('Error submitting request:', err);
       setError('Failed to submit request. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenHistoryDialog = (request: Request) => {
+    setSelectedRequestForHistory(request);
+    setCrimeHistoryInput(request.crimeHistory || '');
+    setHistoryDialogOpen(true);
+  };
+
+  const handleSubmitHistory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRequestForHistory) return;
+
+    setLoading(true);
+    try {
+      const encryptedHistory = encryptData(crimeHistoryInput.trim());
+      const { error } = await supabase
+        .from('requests')
+        .update({ crimeHistory: encryptedHistory })
+        .eq('id', selectedRequestForHistory.id);
+
+      if (error) throw error;
+
+      setHistoryDialogOpen(false);
+      setSelectedRequestForHistory(null);
+      setCrimeHistoryInput('');
+      fetchRequests();
+    } catch (err) {
+      console.error('Error updating crime history:', err);
+      setError('Failed to update crime history.');
     } finally {
       setLoading(false);
     }
@@ -402,14 +441,31 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
                                 <div><strong>Subscriber:</strong> {request.result.subscriberName}</div>
                                 <div><strong>Address:</strong> {request.result.address}</div>
                                 <div><strong>Provider:</strong> {request.result.provider}</div>
-                                {request.result.crimeHistory && (
-                                  <div><strong>Crime History:</strong> {request.result.crimeHistory}</div>
-                                )}
                                 <div className="flex items-center gap-2 text-green-700 pt-2 border-t border-green-200">
                                   <Shield className="w-3 h-3" />
                                   <span className="text-xs">Data encrypted and securely transmitted</span>
                                 </div>
                               </div>
+
+                              {request.crimeHistory ? (
+                                <div className="text-sm bg-gray-50 border border-gray-200 rounded p-3 text-gray-700">
+                                  <div className="flex justify-between items-start mb-1">
+                                    <strong>Crime History provided:</strong>
+                                    <Button variant="ghost" size="sm" onClick={() => handleOpenHistoryDialog(request)} className="h-6 text-xs text-blue-600 hover:text-blue-800">Edit</Button>
+                                  </div>
+                                  <span className="whitespace-pre-wrap">{request.crimeHistory}</span>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                                  onClick={() => handleOpenHistoryDialog(request)}
+                                >
+                                  <AlertCircle className="w-4 h-4 mr-2" />
+                                  Add Crime Case History
+                                </Button>
+                              )}
 
                               <Button
                                 variant="outline"
@@ -436,6 +492,34 @@ export function PoliceDashboard({ stationCode, onLogout }: PoliceDashboardProps)
             </Card>
           </div>
         )}
+
+        <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Crime Case History</DialogTitle>
+              <DialogDescription>
+                Enter crime case history details for <strong>{selectedRequestForHistory?.phoneNumber}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmitHistory} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="crimeHistoryInput">Crime Case History</Label>
+                <Textarea
+                  id="crimeHistoryInput"
+                  value={crimeHistoryInput}
+                  onChange={(e) => setCrimeHistoryInput(e.target.value)}
+                  placeholder="Enter crime details, FIR numbers, etc."
+                  rows={4}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading || !crimeHistoryInput.trim()}>
+                <Shield className="w-4 h-4 mr-2" />
+                {loading ? 'Saving...' : 'Save Encrypted History'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

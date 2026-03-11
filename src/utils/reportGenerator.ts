@@ -6,11 +6,11 @@ interface Request {
     timestamp: string;
     status: 'pending' | 'forwarded' | 'completed';
     stationCode: string;
+    crimeHistory?: string;
     result?: {
         subscriberName: string;
         address: string;
         provider: string;
-        crimeHistory?: string;
         encrypted: boolean;
     };
 }
@@ -83,12 +83,12 @@ export const generateRequestReport = (request: Request) => {
 
         yPos += (lineHeight * addressLines.length) + 5;
 
-        if (request.result.crimeHistory) {
+        if (request.crimeHistory) {
             doc.setFont("helvetica", "bold");
             doc.text("Crime History:", 20, yPos);
             doc.setFont("helvetica", "normal");
 
-            const historyLines = doc.splitTextToSize(request.result.crimeHistory, 110);
+            const historyLines = doc.splitTextToSize(request.crimeHistory, 110);
             doc.text(historyLines, 70, yPos);
             yPos += (lineHeight * historyLines.length) + 5;
         }
