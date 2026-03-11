@@ -66,37 +66,47 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   const IconComponent = config.icon;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-4">
-            <IconComponent className="w-6 h-6 text-primary-foreground" />
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative"
+      style={{
+        backgroundImage: 'url(/cyber_bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      <div className="absolute inset-0 bg-black/60 z-0"></div>
+
+      <Card className="w-full max-w-md z-10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] border border-white/20 bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden text-white">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4 shadow-inner border border-white/10 backdrop-blur-sm">
+            <IconComponent className="w-8 h-8 text-white" />
           </div>
-          <CardTitle>{config.title}</CardTitle>
-          <CardDescription>{config.description}</CardDescription>
+          <CardTitle className="text-2xl font-bold tracking-tight text-white">{config.title}</CardTitle>
+          <CardDescription className="text-white/80">{config.description}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="text-red-500 text-sm mb-2">{error}</div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role" className="text-white">Role</Label>
               <Select value={role} onValueChange={(value: UserRole) => setRole(value)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:ring-white/30">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="police">Police Station</SelectItem>
-                  <SelectItem value="cyber">Cyber Cell</SelectItem>
-                  <SelectItem value="isp">ISP Provider</SelectItem>
+                <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                  <SelectItem value="police" className="focus:bg-slate-800 focus:text-white">Police Station</SelectItem>
+                  <SelectItem value="cyber" className="focus:bg-slate-800 focus:text-white">Cyber Cell</SelectItem>
+                  <SelectItem value="isp" className="focus:bg-slate-800 focus:text-white">ISP Provider</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {config.showStationCode && (
               <div className="space-y-2">
-                <Label htmlFor="stationCode">Station Code</Label>
+                <Label htmlFor="stationCode" className="text-white">Station Code</Label>
                 <Input
                   id="stationCode"
                   type="text"
@@ -104,12 +114,13 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                   value={stationCode}
                   onChange={(e) => setStationCode(e.target.value)}
                   required
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
                 />
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-white">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -117,22 +128,23 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
               />
             </div>
 
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full bg-black hover:bg-black text-white border-0 shadow-lg mt-4 h-11">
+              Secure Login
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground mb-2">Demo Credentials:</p>
-            <div className="text-xs space-y-1">
-              <div>Police: Station Code "PS001", Password: "demo123"</div>
-              <div>Cyber Cell: Password "cyber123"</div>
-              <div>ISP: Password "isp123"</div>
+          {/* <div className="mt-8 p-4 bg-black/40 border border-white/10 rounded-lg backdrop-blur-md">
+            <p className="text-sm font-medium text-white/90 mb-3 border-b border-white/10 pb-2">Demo Credentials:</p>
+            <div className="text-xs space-y-2 text-white/70">
+              <div className="flex justify-between items-center"><span className="text-white/50">Police</span> <span className="font-mono bg-black/30 px-2 py-0.5 rounded">PS001 / demo123</span></div>
+              <div className="flex justify-between items-center"><span className="text-white/50">Cyber Cell</span> <span className="font-mono bg-black/30 px-2 py-0.5 rounded">cyber123</span></div>
+              <div className="flex justify-between items-center"><span className="text-white/50">ISP</span> <span className="font-mono bg-black/30 px-2 py-0.5 rounded">isp123</span></div>
             </div>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>
